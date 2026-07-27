@@ -52,11 +52,8 @@ router.get(['/manifest.json', '/:configuration/manifest.json'], (req, res) => {
     res.end(JSON.stringify(getManifest(configValues, noCatalogs)))
 })
 
-router.get([
-    '/:resource/:type/:id.json',
-    '/:resource/:type/:id/:extra.json',
-    '*'
-], limiter, (req, res, next) => {
+router.use((req, res, next) => {
+    if (req.method !== 'GET') return next();
     const urlParts = req.url.split('?')[0].split('/').filter(Boolean);
     let resource, type, id, extra, configStr;
 
