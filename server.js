@@ -3628,6 +3628,7 @@ if (isMainModule || import.meta.url === `file://${__filename}`) {
 
 // Export for cluster usage
 export { app, server, PORT, HOST };
+export default app;
 
 if (sqliteCache?.isEnabled()) {
     sqliteCache.initSqlite().then(() => {
