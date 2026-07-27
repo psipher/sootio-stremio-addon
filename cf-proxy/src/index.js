@@ -108,7 +108,7 @@ export default {
             });
         }
 
-        const { url: targetUrl, headers: reqHeaders = {}, method = 'GET' } = body;
+        const { url: targetUrl, headers: reqHeaders = {}, method = 'GET', body: reqBody = null } = body;
 
         if (!targetUrl || typeof targetUrl !== 'string') {
             return new Response(JSON.stringify({ error: 'Missing or invalid "url" field' }), {
@@ -153,11 +153,15 @@ export default {
         // ── Fetch through Cloudflare egress IPs ─────────────────────────────
         let upstream;
         try {
-            upstream = await fetch(targetUrl, {
+            const fetchOpts = {
                 method: method.toUpperCase(),
                 headers: forwardHeaders,
                 redirect: 'follow',
-            });
+            };
+            if (reqBody && ['POST', 'PUT', 'PATCH'].includes(method.toUpperCase())) {
+                fetchOpts.body = reqBody;
+            }
+            upstream = await fetch(targetUrl, fetchOpts);
         } catch (err) {
             return new Response(
                 JSON.stringify({ error: 'Upstream fetch failed', message: err.message }),
