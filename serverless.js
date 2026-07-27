@@ -105,44 +105,18 @@ router.use((req, res, next) => {
         })
 })
 
-router.get('/resolve/:debridProvider/:debridApiKey/:id/:hostUrl', limiter, (req, res) => {
-    const clientIp = requestIp.getClientIp(req)
-    const decodedHostUrl = decode(req.params.hostUrl)
+router.get('/resolve/:debridProvider/:debridApiKey/*', limiter, (req, res) => {
+    const { debridProvider, debridApiKey } = req.params;
+    // Extract everything after /resolve/:debridProvider/:debridApiKey/
+    const prefix = `/resolve/${debridProvider}/${debridApiKey}/`;
+    const rawTarget = req.url.substring(req.url.indexOf(prefix) + prefix.length).split('?')[0];
+    const decodedUrl = decodeURIComponent(rawTarget);
+    const clientIp = requestIp.getClientIp(req);
 
-    // Validate hostUrl parameter
-    if (!decodedHostUrl || decodedHostUrl === 'undefined') {
-        console.error('[RESOLVER] Missing or invalid hostUrl parameter')
-        return res.status(400).send('Missing or invalid hostUrl parameter')
-    }
-
-    const cacheKey = typeof req.query.cacheKey === 'string' ? req.query.cacheKey : null;
-    const cacheHash = typeof req.query.cacheHash === 'string' ? req.query.cacheHash : null;
-    const resolveConfig = {};
-    if (cacheKey && cacheKey.length < 512) resolveConfig.cacheKey = cacheKey;
-    if (cacheHash && cacheHash.length < 128) resolveConfig.cacheHash = cacheHash;
-
-    StreamProvider.resolveUrl(req.params.debridProvider, req.params.debridApiKey, req.params.id, decodedHostUrl, clientIp, resolveConfig)
-        .then(url => {
-            res.redirect(url)
-        })
-        .catch(err => {
-            console.log(err)
-            handleError(err, res)
-        })
-})
-
-// Handle 3-parameter resolve URLs (compatibility with server.js format)
-router.get('/resolve/:debridProvider/:debridApiKey/:url', limiter, (req, res) => {
-    const { debridProvider, debridApiKey, url } = req.params;
-
-    // Validate required parameters
-    if (!url || url === 'undefined') {
+    if (!decodedUrl || decodedUrl === 'undefined') {
         console.error('[RESOLVER] Missing or invalid URL parameter');
         return res.status(400).send('Missing or invalid URL parameter');
     }
-
-    const decodedUrl = decodeURIComponent(url);
-    const clientIp = requestIp.getClientIp(req);
 
     const cacheKey = typeof req.query.cacheKey === 'string' ? req.query.cacheKey : null;
     const cacheHash = typeof req.query.cacheHash === 'string' ? req.query.cacheHash : null;
@@ -153,16 +127,16 @@ router.get('/resolve/:debridProvider/:debridApiKey/:url', limiter, (req, res) =>
     StreamProvider.resolveUrl(debridProvider, debridApiKey, null, decodedUrl, clientIp, resolveConfig)
         .then(url => {
             if (url) {
-                res.redirect(url)
+                res.redirect(url);
             } else {
                 res.status(404).send('Could not resolve link');
             }
         })
         .catch(err => {
-            console.log(err)
-            handleError(err, res)
-        })
-})
+            console.error('[RESOLVER-ERROR]', err);
+            handleError(err, res);
+        });
+});
 
 router.get('/ping', (_, res) => {
     res.statusCode = 200
