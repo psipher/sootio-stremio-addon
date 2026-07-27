@@ -333,12 +333,17 @@ function botDetectionMiddleware(req, res, next) {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const dataDir = path.join(__dirname, 'data');
+const isServerlessEnv = !!(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+const dataDir = isServerlessEnv ? '/tmp/data' : path.join(__dirname, 'data');
 
 if (!fs.existsSync(dataDir)) {
     console.log(`[SERVER] Creating data directory: ${dataDir}`);
-    fs.mkdirSync(dataDir, { recursive: true });
-    console.log(`[SERVER] Created data directory: ${dataDir}`);
+    try {
+        fs.mkdirSync(dataDir, { recursive: true });
+        console.log(`[SERVER] Created data directory: ${dataDir}`);
+    } catch (err) {
+        console.warn(`[SERVER] Could not create data directory ${dataDir}: ${err.message}`);
+    }
 } else {
     console.log(`[SERVER] Data directory already exists: ${dataDir}`);
 }
