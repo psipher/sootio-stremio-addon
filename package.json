@@ -2,7 +2,7 @@
 	"name": "Sootio",
 	"version": "1.9.1",
 	"description": "Stremio Addon to search downloads and torrents in debrid services",
-	"main": "server.js",
+	"main": "api/index.js",
 	"scripts": {
 		"start": "node --max-old-space-size=2048 --expose-gc cluster.js",
 		"start:dev": "cross-env LOG_LEVEL=debug node --max-old-space-size=2048 --expose-gc cluster.js",
