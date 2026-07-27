@@ -1,0 +1,7 @@
+name = "sootio-fetch-proxy"
+main = "src/index.js"
+compatibility_date = "2026-07-27"
+
+# Purely stateless — no KV, D1, or storage needed.
+# The only secret is PROXY_AUTH_TOKEN, set via:
+#   npx wrangler secret put PROXY_AUTH_TOKEN
