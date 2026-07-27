@@ -951,9 +951,10 @@ app.get('/resolve/httpstreaming/:url', resolveRateLimiter, async (req, res) => {
     const decodedUrl = decodeURIComponent(url);
     const isUHDMoviesUrl = decodedUrl.includes('driveleech') ||
         decodedUrl.includes('driveseed') ||
-        decodedUrl.includes('tech.unblockedgames.world') ||
-        decodedUrl.includes('tech.creativeexpressionsblog.com') ||
-        decodedUrl.includes('tech.examzculture.in');
+        decodedUrl.includes('unblockedgames') ||
+        decodedUrl.includes('creativeexpressionsblog') ||
+        decodedUrl.includes('examzculture') ||
+        decodedUrl.includes('sid=');
     const isShortlinkResolveUrl = decodedUrl.includes('ouo.io') ||
         decodedUrl.includes('ouo.press') ||
         decodedUrl.includes('oii.la') ||
