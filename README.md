@@ -15,7 +15,7 @@
 </p>
 
 > [!NOTE]
-> **Status Update (July 27, 2026):** All major provider deprecations, broken scrapers, Cloudflare WAF challenges, and serverless deployment issues from the original repository have been **fully resolved** in this fork. See [`CHANGELOG.md`](CHANGELOG.md) for detailed recovery reports.
+> **Status Update (July 27, 2026):** 3 providers still not fixed, currently working on it.
 
 ---
 
