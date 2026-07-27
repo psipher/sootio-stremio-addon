@@ -105,11 +105,16 @@ router.use((req, res, next) => {
         })
 })
 
-router.get('/resolve/:debridProvider/:debridApiKey/*', limiter, (req, res) => {
-    const { debridProvider, debridApiKey } = req.params;
-    // Extract everything after /resolve/:debridProvider/:debridApiKey/
-    const prefix = `/resolve/${debridProvider}/${debridApiKey}/`;
-    const rawTarget = req.url.substring(req.url.indexOf(prefix) + prefix.length).split('?')[0];
+router.use((req, res, next) => {
+    if (!req.url.startsWith('/resolve/')) return next();
+    
+    const parts = req.url.split('?')[0].split('/').filter(Boolean);
+    // URL structure: /resolve/:debridProvider/:debridApiKey/...
+    if (parts.length < 3) return next();
+
+    const debridProvider = parts[1];
+    const debridApiKey = parts[2];
+    const rawTarget = parts.slice(3).join('/');
     const decodedUrl = decodeURIComponent(rawTarget);
     const clientIp = requestIp.getClientIp(req);
 
