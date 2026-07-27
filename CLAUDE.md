@@ -107,6 +107,9 @@ All config via `.env` file. Key patterns:
 - `[SCRAPER]_LIMIT` - Max results per search
 - `RD_*`, `AD_*` - Rate limits for debrid providers
 - `DEBRID_HTTP_PROXY` - SOCKS5/HTTP proxy URL
+- `CF_PROXY_URL` - Cloudflare Worker fetch proxy URL for bypassing CF WAF blocks
+- `CF_PROXY_TOKEN` - Authentication token matching Cloudflare Worker PROXY_AUTH_TOKEN secret
+- `BYPARR_URL` - Byparr Camoufox anti-bot solver service URL (Cloud Run)
 - `SQLITE_CACHE_ENABLED=true` - Enable persistent cache
 - `CACHE_BACKEND=sqlite|postgres` - Cache backend selection
 

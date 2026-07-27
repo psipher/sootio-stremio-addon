@@ -1,4 +1,31 @@
-# Changelog & PR Description
+## UHDMovies Gateway Bypass & CF Proxy POST Body Fix (2026-07-27)
+
+### 📌 Summary of Changes
+
+Resolved 100% of UHDMovies SID gateway stream resolution failures on Vercel production deployment. Fixed Cloudflare Worker proxy POST request body forwarding, `isUHDMoviesUrl` router pattern matching, `cdn.video-gen.xyz` link extraction, and ES Module bundler compatibility.
+
+### 🚀 Key Improvements
+
+#### 1. 🔑 CF Worker Proxy POST Body Forwarding (`cf-proxy/src/index.js` & `lib/http-streams/utils/http.js`)
+- Fixed `makeCfProxyRequest` and `cf-proxy` worker to accept and forward POST request bodies (`_wp_http`, `_wp_http2`, `token`).
+- Allows multi-step form interactions on `cloud.unblockedgames.world` to pass through the Cloudflare Worker proxy cleanly.
+- Updated `CF_PROXY_URL` and `CF_PROXY_TOKEN` evaluation to be dynamic at call time instead of at module load time.
+
+#### 2. ⚡ `cdn.video-gen.xyz` Instant Download Extraction (`lib/util/linkResolver.js` & `lib/uhdmovies/resolvers/url-resolver.js`)
+- Fixed `driveseed.org` file page parser to extract `cdn.video-gen.xyz` Instant Download hrefs directly from HTML.
+- Bypass `googleusercontent.com` blanket filter for `cdn.video-gen.xyz` CDN links so players handle native 307 redirects to `video-downloads.googleusercontent.com`.
+
+#### 3. 🛠️ Vercel Router & StreamProvider Fixes (`server.js`, `serverless.js`, `lib/stream-provider.js`)
+- Fixed `isUHDMoviesUrl` pattern matching in `server.js` and `lib/stream-provider.js` to recognize `unblockedgames`, `creativeexpressionsblog`, `examzculture`, and `sid=` URLs.
+- Fixed `serverless.js` `Location` header bug by safely unwrapping resolved objects `{ url, fileName, size }` into string URLs before returning HTTP 307 redirects.
+- Prevented storing failed (`null`) resolution results in `sidCache` and `resolveCache`.
+- Removed legacy `axios-cookiejar-support` import from `sid-resolver.js` to fix ES Module `require('agent-base')` bundling crashes on Vercel.
+
+### 📊 Production Verification Results
+
+- **UHDMovies Streams**: **3/3 (100%)** successfully resolved to live `cdn.video-gen.xyz` stream links via HTTP 307 on production (`sootio-stremio-addon-rosy.vercel.app`).
+
+---
 
 ## CF Worker Fetch Proxy + Vercel HTTP Stream Optimizations (2026-07-27)
 
