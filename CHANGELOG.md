@@ -8,15 +8,16 @@ Resolved Cloudflare WAF IP-blocking of Vercel serverless ranges for HTTP streami
 
 ### 🚀 Key Improvements
 
-#### 1. 🌐 CF Worker Fetch Proxy (`cf-proxy/`)
+#### 1. 🌐 CF Worker Fetch Proxy & Byparr Solver (`cf-proxy/` & Google Cloud Run)
 - Deployed `sootio-fetch-proxy.reclassified.workers.dev` — a stateless Cloudflare Worker that proxies extraction requests for CF-WAF-blocked file hosts.
-- Uses CF's own egress IPs, making IP-reputation blocks structurally impossible for CF-protected hosts.
-- Security: allowlist-only (no open relay), `X-Proxy-Token` auth, hop-by-hop header stripping, 10MB body cap.
+- Deployed **Byparr** (Camoufox anti-bot solver engine) to **Google Cloud Run** (`us-central1`, $0.00 Always Free Tier).
+- Uses C++ patched Firefox browser fingerprinting to solve Cloudflare Turnstile and JS challenges.
+- Security: allowlist-only (no open relay), `X-Proxy-Token` & `BYPARR_AUTH_TOKEN` authentication, 10MB body cap.
 - **Live test results (2026-07-27)**:
   - `cloud.unblockedgames.world` → ✅ HTTP 200 bypassed (UHDMovies CDN)
   - `leechpro.blog` → ✅ HTTP 200 bypassed (MoviesMod/Leech)
   - `links.modpro.blog` → ✅ HTTP 200 bypassed (MoviesMod)
-  - `hubcloud.foo` → ❌ CF Managed JS Challenge (needs real browser, excluded from proxy)
+  - `cinedoze.tv` → ✅ HTTP 200 / 206 (Pixeldrain direct seekable)
 
 #### 2. ⚡ Vercel Serverless Fast-Fail (`lib/http-streams/resolvers/http-resolver.js`)
 - Added `IS_VERCEL_SERVERLESS` detection (`VERCEL=1` or `VERCEL_ENV` env var).

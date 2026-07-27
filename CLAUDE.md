@@ -143,26 +143,27 @@ This project uses ES modules (`"type": "module"` in package.json). Use `import`/
 
 ---
 
-## Vercel Deployment & CF Worker Proxy
+## Vercel Deployment & Anti-Bot Infrastructure
 
 ### Current Production URL
-`https://sootio-stremio-addon-rosy.vercel.app`
+`https://sootio-stremio-addon-wmc4.vercel.app`
 
-### CF Worker Proxy (`cf-proxy/`)
+### 🌐 CF Worker Proxy (`cf-proxy/`)
 A stateless Cloudflare Worker deployed at `https://sootio-fetch-proxy.reclassified.workers.dev`.
+- Routes extraction requests through Cloudflare's own egress IPs, bypassing IP-reputation WAF blocks.
 
-**Why it exists**: Certain file hosts block Vercel's serverless IP ranges via Cloudflare WAF. The CF Worker routes extraction requests through Cloudflare's own egress IPs, which bypass IP-reputation blocks.
+### 🛡️ Byparr Anti-Bot Solver (Google Cloud Run)
+Deployed on Google Cloud Run (`https://byparr-765408203668.us-central1.run.app`, $0.00 Always Free Tier).
+- Uses **Camoufox** (patched C++ anti-detection Firefox) to solve Cloudflare Turnstile and JS challenges.
+- Modern, drop-in replacement for FlareSolverr.
 
-**Required Vercel env vars** (must be set in Vercel Dashboard → Project Settings → Environment Variables):
+**Required Vercel env vars** (set in Vercel Dashboard → Project Settings → Environment Variables):
 ```env
 CF_PROXY_URL=https://sootio-fetch-proxy.reclassified.workers.dev/proxy
-CF_PROXY_TOKEN=<secret set via `npx wrangler secret put PROXY_AUTH_TOKEN` in cf-proxy/>
+CF_PROXY_TOKEN=<sensitive-proxy-secret>
+BYPARR_URL=https://byparr-765408203668.us-central1.run.app
+BYPARR_AUTH_TOKEN=<sensitive-byparr-secret>
 ```
-
-**How it works** (`lib/http-streams/providers/4khdhub/extraction.js`):
-- In `extractHubCloudLinks()`, if `CF_PROXY_URL` is set and target host is in `CF_PROXY_HOSTS`, `makeCfProxyRequest()` is called first.
-- If proxy succeeds (no CF challenge), the response is injected via `Promise.resolve(initialResponseOverride)` into the existing `makeRequest` chain — ALL existing link extraction logic runs unchanged.
-- If proxy is unconfigured or fails, falls through to `makeRequest` → Impit → FlareSolverr as before.
 
 **Live proxy test results (2026-07-27)**:
 

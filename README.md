@@ -207,27 +207,48 @@ vercel --prod
 4. Click **Deploy**. Vercel will automatically build the serverless function.
 5. Open your live deployment URL (e.g. `https://<your-app>.vercel.app/configure`) to install the addon into Stremio!
 
-#### Vercel Environment Variables (HTTP Streaming)
+#### Vercel Environment Variables (HTTP Streaming & Cloudflare Bypass)
 
-For full HTTP stream resolution on Vercel, set these two additional env vars in **Vercel Dashboard → Project Settings → Environment Variables**:
+For full HTTP stream resolution on Vercel, set these environment variables in **Vercel Dashboard → Project Settings → Environment Variables**:
 
-| Variable | Description |
-|---|---|
-| `CF_PROXY_URL` | URL of the CF Worker proxy (see `cf-proxy/`) e.g. `https://sootio-fetch-proxy.<account>.workers.dev/proxy` |
-| `CF_PROXY_TOKEN` | Shared secret matching the Worker's `PROXY_AUTH_TOKEN` |
+| Variable | Type | Description |
+|---|---|---|
+| `CF_PROXY_URL` | Plaintext | URL of the CF Worker proxy e.g. `https://sootio-fetch-proxy.<subdomain>.workers.dev/proxy` |
+| `CF_PROXY_TOKEN` | **Sensitive** 🔒 | Shared secret matching the Worker's `PROXY_AUTH_TOKEN` |
+| `BYPARR_URL` | Plaintext | URL of Byparr solver instance e.g. `https://byparr-xxxx.us-central1.run.app` |
+| `BYPARR_AUTH_TOKEN` | **Sensitive** 🔒 | Auth token matching Byparr container's `AUTH_TOKEN` |
 
-**Why?** Certain file hosts (`cloud.unblockedgames.world`, `leechpro.blog`, `links.modpro.blog`) block Vercel's serverless IP ranges via Cloudflare WAF. The CF Worker proxy routes those requests through Cloudflare's own egress IPs, which cannot be blocked.
-
-##### Deploying the CF Worker proxy
+##### 🌐 Cloudflare Worker Proxy (`cf-proxy/`)
+Routes request fetching through Cloudflare's own egress IPs, bypassing IP-reputation blocking on serverless ranges.
 
 ```bash
 cd cf-proxy
 npx wrangler deploy
-npx wrangler secret put PROXY_AUTH_TOKEN   # enter the token you'll use for CF_PROXY_TOKEN
+npx wrangler secret put PROXY_AUTH_TOKEN   # enter your secret token
+```
+
+##### 🛡️ Byparr Solver (Camoufox Anti-Bot Engine on Google Cloud Run)
+Byparr uses **Camoufox** (patched anti-detection Firefox) to solve Cloudflare Turnstile and JS challenges.
+
+```bash
+# Deploy to Google Cloud Run ($0.00 Always Free Tier)
+gcloud run deploy byparr \
+  --image=ghcr.io/thephaseless/byparr:latest \
+  --platform=managed \
+  --region=us-central1 \
+  --allow-unauthenticated \
+  --memory=1Gi \
+  --cpu=1 \
+  --min-instances=0 \
+  --max-instances=1 \
+  --concurrency=10 \
+  --cpu-throttling \
+  --port=8192 \
+  --set-env-vars="AUTH_TOKEN=<your-secure-token>"
 ```
 
 > [!NOTE]
-> `hubcloud.foo` (MoviesDrive search-recover links) uses a CF Managed JS Challenge and cannot be bypassed by any fetch proxy — it requires a real browser. These streams will fast-fail on Vercel regardless.
+> Byparr is a modern, drop-in replacement for FlareSolverr that handles C++ level Canvas/WebGL browser fingerprint spoofing. `BYPARR_URL` and `FLARESOLVERR_URL` can both be configured.
 
 ---
 
