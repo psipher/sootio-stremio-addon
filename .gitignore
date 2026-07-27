@@ -110,3 +110,4 @@ data/
 .lib/data/
 *.backup
 *.broken
+.vercel

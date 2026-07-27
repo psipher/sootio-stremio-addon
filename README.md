@@ -179,6 +179,33 @@ npm run dev
 
 ---
 
+### Method 3: Serverless Deployment (Vercel)
+
+Sootio includes full Serverless support out-of-the-box (`serverless.js`, `api/index.js`, and `vercel.json`).
+
+#### Deploy via Vercel CLI (Recommended)
+
+1. **Install Vercel CLI & Log in**
+```bash
+npm i -g vercel
+vercel login
+```
+
+2. **Deploy to Production**
+```bash
+vercel --prod
+```
+
+#### Deploy via Vercel Dashboard
+
+1. Push your repository to GitHub.
+2. Go to [Vercel Dashboard](https://vercel.com/new) -> **Import Project**.
+3. Select your GitHub repository (`sootio-stremio-addon`).
+4. Click **Deploy**. Vercel will automatically build the serverless function.
+5. Open your live deployment URL (e.g. `https://<your-app>.vercel.app/configure`) to install the addon into Stremio!
+
+---
+
 ### Method 3: Optional SQLite Setup
 
 SQLite is **optional** but **highly recommended** for:

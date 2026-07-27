@@ -1,5 +1,15 @@
 # Changelog & PR Description
 
+## Vercel Serverless Support & XDMovies FlareSolverr Fallback
+
+### 📌 Summary of Changes
+- Added full Vercel serverless deployment configuration (`serverless.js`, `api/index.js`, `vercel.json`).
+- Updated SQLite cache engines (`lib/util/scraper-performance.js`, `lib/util/sqlite-cache.js`) to automatically use `/tmp` write paths on serverless read-only filesystems (Vercel / AWS Lambda), preventing `SQLITE_READONLY` crashes.
+- Added FlareSolverr HTML DOM solver fallback to XDMovies (`lib/http-streams/providers/xdmovies/search.js`), ensuring download link extraction when public worker APIs hit Cloudflare WAF challenges.
+- Configured Node ESM test execution with `--experimental-vm-modules` in `package.json`.
+
+---
+
 ## Dynamic Self-Healing Domain Manager & HTTP Streams Infrastructure Repair (100% Provider Recovery)
 
 ### 📌 Summary of Changes
