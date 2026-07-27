@@ -109,16 +109,25 @@ router.use((req, res, next) => {
     const fullUrl = req.originalUrl || req.url;
     if (!fullUrl.includes('/resolve/')) return next();
 
-    // URL structure: /resolve/:debridProvider/:debridApiKey/...
-    const match = fullUrl.match(/\/resolve\/([^/]+)\/([^/]+)\/(.+)$/);
+    // URL structure: /resolve/:debridProvider/:debridApiKey/... or /resolve/:debridProvider/...
+    const match = fullUrl.match(/\/resolve\/([^/]+)(?:\/([^/]+))?\/(.+)$/);
     if (!match) {
         console.error('[RESOLVER] Failed to match resolve URL prefix format:', fullUrl);
         return res.status(400).send('Invalid resolve URL format');
     }
 
-    const debridProvider = match[1];
-    const debridApiKey = match[2];
-    const rawTarget = match[3].split('?')[0];
+    let debridProvider = match[1];
+    let debridApiKey = match[2];
+    let rawTarget = match[3].split('?')[0];
+
+    // Handle 2-part resolve format: /resolve/httpstreaming/https%3A...
+    if (!rawTarget.startsWith('http://') && !rawTarget.startsWith('https://') && !rawTarget.includes('%3A%2F%2F')) {
+        if (debridApiKey && (debridApiKey.startsWith('http') || debridApiKey.includes('%3A%2F%2F'))) {
+            rawTarget = `${debridApiKey}/${rawTarget}`;
+            debridApiKey = 'none';
+        }
+    }
+
     const decodedUrl = decodeURIComponent(rawTarget);
     const clientIp = requestIp.getClientIp(req);
 
