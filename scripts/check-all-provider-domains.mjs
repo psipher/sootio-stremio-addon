@@ -5,7 +5,7 @@ const DOMAINS_TO_CHECK = [
   // Primary Provider Base Domains
   { category: 'Scraper Base', provider: 'UHDMovies', url: 'https://uhdmovies.casa' },
   { category: 'Scraper Base', provider: '4KHDHub', url: 'https://4khdhub.org' },
-  { category: 'Scraper Base', provider: 'HDHub4u', url: 'https://hdhub4u.fr' },
+  { category: 'Scraper Base', provider: 'HDHub4u', url: 'https://new3.hdhub4u.cl' },
   { category: 'Scraper Base', provider: 'MoviesMod', url: 'https://moviesmod.at' },
   { category: 'Scraper Base', provider: 'MoviesDrive', url: 'https://new6.moviesdrives.my' },
   { category: 'Scraper Base', provider: 'MKVCinemas', url: 'https://mkvcinemas.org' },
