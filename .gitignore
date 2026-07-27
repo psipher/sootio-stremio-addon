@@ -111,3 +111,6 @@ data/
 *.backup
 *.broken
 .vercel
+
+# CF Worker build artifacts
+cf-proxy/.wrangler/
