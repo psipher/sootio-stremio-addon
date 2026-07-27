@@ -1,0 +1,14 @@
+# Documentation and markdown files
+*.md
+docs/
+
+# Tests and scripts
+tests/
+scripts/
+
+# Development configuration and local data
+.env.example
+.git
+.github
+data/
+*.db
