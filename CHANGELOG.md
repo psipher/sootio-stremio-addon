@@ -1,5 +1,72 @@
 # Changelog & PR Description
 
+## CF Worker Fetch Proxy + Vercel HTTP Stream Optimizations (2026-07-27)
+
+### 📌 Summary of Changes
+
+Resolved Cloudflare WAF IP-blocking of Vercel serverless ranges for HTTP streaming providers. Introduced a Cloudflare Worker fetch proxy that routes blocked host requests through Cloudflare's own CDN egress IPs, bypassing IP-reputation blocks.
+
+### 🚀 Key Improvements
+
+#### 1. 🌐 CF Worker Fetch Proxy (`cf-proxy/`)
+- Deployed `sootio-fetch-proxy.reclassified.workers.dev` — a stateless Cloudflare Worker that proxies extraction requests for CF-WAF-blocked file hosts.
+- Uses CF's own egress IPs, making IP-reputation blocks structurally impossible for CF-protected hosts.
+- Security: allowlist-only (no open relay), `X-Proxy-Token` auth, hop-by-hop header stripping, 10MB body cap.
+- **Live test results (2026-07-27)**:
+  - `cloud.unblockedgames.world` → ✅ HTTP 200 bypassed (UHDMovies CDN)
+  - `leechpro.blog` → ✅ HTTP 200 bypassed (MoviesMod/Leech)
+  - `links.modpro.blog` → ✅ HTTP 200 bypassed (MoviesMod)
+  - `hubcloud.foo` → ❌ CF Managed JS Challenge (needs real browser, excluded from proxy)
+
+#### 2. ⚡ Vercel Serverless Fast-Fail (`lib/http-streams/resolvers/http-resolver.js`)
+- Added `IS_VERCEL_SERVERLESS` detection (`VERCEL=1` or `VERCEL_ENV` env var).
+- `VERCEL_BLOCKED_DOMAINS`: fast-fails `hubcloud.foo` in <100ms instead of 15-30s timeout.
+- `VERCEL_BLOCKED_DOMAINS` is empty when `CF_PROXY_URL + CF_PROXY_TOKEN` are configured (other hosts go through proxy).
+- Skips 206 range-request validation on Vercel (Vercel IPs are blocked from range requests to file hosts).
+
+#### 3. 🔧 `makeCfProxyRequest()` (`lib/http-streams/utils/http.js`)
+- New exported function that POSTs to the CF Worker proxy.
+- Returns same shape as `makeRequest` — drop-in for the extraction chain.
+- Returns `null` (never throws) when unconfigured — callers fall back to `makeRequest`/Impit.
+- Exports: `CF_PROXY_URL`, `CF_PROXY_TOKEN`, `CF_PROXY_HOSTS` for use by extractors.
+
+#### 4. 🛡️ HubCloud Extractor Integration (`lib/http-streams/providers/4khdhub/extraction.js`)
+- CF proxy injected as first-attempt via `initialResponseOverride` pattern.
+- Proxy response fed into the existing `makeRequest` chain via `Promise.resolve()` — **zero duplication** of 400-line extraction logic.
+- Falls through to `makeRequest` → Impit → FlareSolverr if proxy unconfigured or fails.
+- `hubcloud.foo` added to `DEAD_HUBCLOUD_DOMAINS` (permanent fast-fail regardless of environment).
+
+#### 5. 🐛 Bug Fix: `backgroundPreResolve` URL key mismatch (`lib/stream-provider.js`)
+- Fixed regex that greedily captured `?t=...` query params Stremio appends to resolve URLs.
+- Pre-resolve cache key now matches on-demand resolve key, making background pre-resolution actually effective.
+
+#### 6. 🔬 E2E Test Rewrite (`tests/e2e-stream-test.js`)
+- Full redirect chain following (HEAD, up to 6 hops).
+- `Range: bytes=0-1` HTTP 206 seekability validation on final URL.
+- `Content-Type` video MIME type checking.
+- Step-by-step per-stream diagnostics + summary table.
+- `process.exit(1)` on archive URLs or zero streams.
+
+### 📊 Vercel Production Test Results (tt1312221 "Frankenstein 2025")
+
+| # | Host | Status | Notes |
+|---|------|--------|-------|
+| 1 | `hubcloud.ist` | ✅ Working | → workers.dev CDN |
+| 2 | `hubcloud.foo` | ❌ Fast-fail | CF Managed Challenge |
+| 3 | `hubcloud.ist` | ✅ Working | → workers.dev CDN |
+| 4 | `hubdrive.tips` | ✅ **HTTP 206** | `video/x-matroska` seekable |
+| 5 | `hubcloud.foo` | ❌ Fast-fail | CF Managed Challenge |
+| 11 | `cinedoze.tv` | ✅ Working | → Pixeldrain |
+
+### ⚙️ Required Env Vars (Vercel)
+```env
+CF_PROXY_URL=https://sootio-fetch-proxy.reclassified.workers.dev/proxy
+CF_PROXY_TOKEN=<your-secret-matching-workers-PROXY_AUTH_TOKEN>
+```
+
+---
+
+
 ## Vercel Serverless Support & XDMovies FlareSolverr Fallback
 
 ### 📌 Summary of Changes

@@ -207,6 +207,28 @@ vercel --prod
 4. Click **Deploy**. Vercel will automatically build the serverless function.
 5. Open your live deployment URL (e.g. `https://<your-app>.vercel.app/configure`) to install the addon into Stremio!
 
+#### Vercel Environment Variables (HTTP Streaming)
+
+For full HTTP stream resolution on Vercel, set these two additional env vars in **Vercel Dashboard → Project Settings → Environment Variables**:
+
+| Variable | Description |
+|---|---|
+| `CF_PROXY_URL` | URL of the CF Worker proxy (see `cf-proxy/`) e.g. `https://sootio-fetch-proxy.<account>.workers.dev/proxy` |
+| `CF_PROXY_TOKEN` | Shared secret matching the Worker's `PROXY_AUTH_TOKEN` |
+
+**Why?** Certain file hosts (`cloud.unblockedgames.world`, `leechpro.blog`, `links.modpro.blog`) block Vercel's serverless IP ranges via Cloudflare WAF. The CF Worker proxy routes those requests through Cloudflare's own egress IPs, which cannot be blocked.
+
+##### Deploying the CF Worker proxy
+
+```bash
+cd cf-proxy
+npx wrangler deploy
+npx wrangler secret put PROXY_AUTH_TOKEN   # enter the token you'll use for CF_PROXY_TOKEN
+```
+
+> [!NOTE]
+> `hubcloud.foo` (MoviesDrive search-recover links) uses a CF Managed JS Challenge and cannot be bypassed by any fetch proxy — it requires a real browser. These streams will fast-fail on Vercel regardless.
+
 ---
 
 ### Method 4: Optional SQLite Setup

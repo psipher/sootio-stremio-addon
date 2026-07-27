@@ -76,6 +76,9 @@ lib/
 │   ├── formatters/        # Stream name/description formatting
 │   └── utils/             # Filtering, sorting utilities
 └── [provider].js          # Debrid provider implementations
+cf-proxy/                  # Cloudflare Worker fetch proxy (see below)
+├── wrangler.toml
+└── src/index.js
 ```
 
 ### Debrid Provider Pattern
@@ -137,3 +140,109 @@ Proxy configuration flows through `lib/util/proxy-manager.js`. Per-service proxi
 
 ### ESM Modules
 This project uses ES modules (`"type": "module"` in package.json). Use `import`/`export` syntax, not `require()`.
+
+---
+
+## Vercel Deployment & CF Worker Proxy
+
+### Current Production URL
+`https://sootio-stremio-addon-rosy.vercel.app`
+
+### CF Worker Proxy (`cf-proxy/`)
+A stateless Cloudflare Worker deployed at `https://sootio-fetch-proxy.reclassified.workers.dev`.
+
+**Why it exists**: Certain file hosts block Vercel's serverless IP ranges via Cloudflare WAF. The CF Worker routes extraction requests through Cloudflare's own egress IPs, which bypass IP-reputation blocks.
+
+**Required Vercel env vars** (must be set in Vercel Dashboard → Project Settings → Environment Variables):
+```env
+CF_PROXY_URL=https://sootio-fetch-proxy.reclassified.workers.dev/proxy
+CF_PROXY_TOKEN=<secret set via `npx wrangler secret put PROXY_AUTH_TOKEN` in cf-proxy/>
+```
+
+**How it works** (`lib/http-streams/providers/4khdhub/extraction.js`):
+- In `extractHubCloudLinks()`, if `CF_PROXY_URL` is set and target host is in `CF_PROXY_HOSTS`, `makeCfProxyRequest()` is called first.
+- If proxy succeeds (no CF challenge), the response is injected via `Promise.resolve(initialResponseOverride)` into the existing `makeRequest` chain — ALL existing link extraction logic runs unchanged.
+- If proxy is unconfigured or fails, falls through to `makeRequest` → Impit → FlareSolverr as before.
+
+**Live proxy test results (2026-07-27)**:
+
+| Host | Proxy Result | Action |
+|------|-------------|--------|
+| `cloud.unblockedgames.world` | ✅ HTTP 200 | In `CF_PROXY_HOSTS`, proxied |
+| `leechpro.blog` | ✅ HTTP 200 | In `CF_PROXY_HOSTS`, proxied |
+| `links.modpro.blog` | ✅ HTTP 200 | In `CF_PROXY_HOSTS`, proxied |
+| `hubcloud.foo` | ❌ CF Managed JS Challenge | In `DEAD_HUBCLOUD_DOMAINS`, permanent fast-fail |
+
+### Vercel Fast-Fail Logic (`lib/http-streams/resolvers/http-resolver.js`)
+- `IS_VERCEL_SERVERLESS`: detected via `process.env.VERCEL === '1'` or `VERCEL_ENV`.
+- `VERCEL_BLOCKED_DOMAINS`: Set containing only `hubcloud.foo` (fast-fails in ~80ms).
+- Skips HTTP 206 range-request validation on Vercel (those requests are also IP-blocked).
+
+### Known Limitations on Vercel (Free Tier)
+- `hubcloud.foo` (MoviesDrive search-recover) uses CF **Managed JS Challenge** — requires a real browser with JS execution. Cannot be bypassed by any `fetch()`-based proxy. These streams will never work on serverless.
+- `hubcloud.ist` and `hubdrive.tips` work because they use workers.dev CDN (not CF WAF).
+
+---
+
+## HTTP Streaming Diagnostics & Tests
+
+### E2E Stream Test (primary validation)
+Tests redirect chain, MIME type, and HTTP 206 seekability for top streams:
+```bash
+node tests/e2e-stream-test.js
+```
+Expected results: streams from `hubcloud.ist`, `hubdrive.tips`, `cinedoze.tv` should return HTTP 206 `video/x-matroska`.
+
+### Proxy Domain Test (run when checking CF proxy bypass for new hosts)
+```bash
+# Write a quick test script or adapt diag-all-providers pattern:
+node -e "
+const token = process.env.CF_PROXY_TOKEN;
+const url = 'https://sootio-fetch-proxy.reclassified.workers.dev/proxy';
+fetch(url, { method:'POST', headers:{'Content-Type':'application/json','X-Proxy-Token':token}, body: JSON.stringify({url:'https://leechpro.blog/archives/22987',method:'GET'}) })
+  .then(r => r.text()).then(b => console.log('Status:', r.status, 'CF:', b.includes('cf_chl')));
+" 2>&1
+```
+
+### CF Worker Health Check
+```bash
+curl https://sootio-fetch-proxy.reclassified.workers.dev/health
+# Expected: {"ok":true,"ts":<epoch>}
+```
+
+### Re-deploying the CF Worker (after changes to `cf-proxy/src/index.js`)
+```bash
+cd cf-proxy
+npx wrangler deploy
+# Secret is already set — no need to re-run `secret put` unless rotating the token
+```
+
+---
+
+## Next Steps / Remaining Work
+
+1. **Set Vercel env vars** (if not already done):
+   - `CF_PROXY_URL=https://sootio-fetch-proxy.reclassified.workers.dev/proxy`
+   - `CF_PROXY_TOKEN=c4ba45d951005f4124d9e39bf4325e5f62176d369e8bc3547a13429dfbe1b645`
+   - After setting, trigger a Vercel redeploy (or `git push`).
+
+2. **Validate with E2E test** after Vercel redeploy:
+   ```bash
+   node tests/e2e-stream-test.js
+   ```
+   - Previously: 3/5 streams resolved → After proxy: expect `leechpro`/`modpro`/`unblockedgames` streams to also resolve.
+
+3. **`hubcloud.foo` (MoviesDrive) — Long-term options**:
+   - Option A: Self-host the addon on a VPS and use FlareSolverr (already supported via `FLARESOLVERR_URL` env var).
+   - Option B: Use Puppeteer/browserless.io remote browser service for `hubcloud.foo` specifically.
+   - Option C: Accept it as a known limitation on serverless and disable MoviesDrive provider on Vercel.
+
+4. **Add remaining providers to `CF_PROXY_HOSTS`** if new blocked hosts are discovered:
+   - Edit `lib/http-streams/utils/http.js` → `CF_PROXY_HOSTS`
+   - Edit `cf-proxy/src/index.js` → `ALLOWED_HOSTS`
+   - Run proxy test to verify bypass works before shipping
+   - Redeploy Worker: `cd cf-proxy && npx wrangler deploy`
+
+5. **Monitor CF Worker usage** in Cloudflare Dashboard → Workers → sootio-fetch-proxy → Analytics.
+   - Free tier: 100,000 requests/day. If exceeded, upgrade to Paid ($5/mo, 10M requests/mo).
+
