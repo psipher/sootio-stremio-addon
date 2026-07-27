@@ -206,7 +206,7 @@ vercel --prod
 
 ---
 
-### Method 3: Optional SQLite Setup
+### Method 4: Optional SQLite Setup
 
 SQLite is **optional** but **highly recommended** for:
 - Multi-user scenarios
@@ -237,7 +237,7 @@ When debugging is enabled, you'll see detailed logs about:
 
 ---
 
-### Method 4: Optional Postgres Cache (Multi-Instance)
+### Method 5: Optional Postgres Cache (Multi-Instance)
 
 For load-balanced or multi-VPS deployments, use Postgres as a shared cache backend.
 
