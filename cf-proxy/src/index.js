@@ -37,6 +37,8 @@
 //   hubcloud.foo              → CF Managed Challenge ❌ (intentionally excluded — needs real browser)
 const ALLOWED_HOSTS = new Set([
     'cloud.unblockedgames.world',
+    'creativeexpressionsblog.com',
+    'examzculture.com',
     'leechpro.blog',
     'links.modpro.blog',
 ]);
