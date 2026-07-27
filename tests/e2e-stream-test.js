@@ -253,8 +253,8 @@ async function runTests() {
     console.log(`  ID Prefixes: ${JSON.stringify(manifest.idPrefixes)}\n`);
 
     // Test 2: Streams
-    console.log('TEST 2: Fetching streams for "Frankenstein" (tt1312221)...');
-    const movieRes = await fetch(`${PRODUCTION_URL}/${encodedConfig}/stream/movie/tt1312221.json`);
+    console.log('TEST 2: Fetching streams for "Oppenheimer" (tt15398776)...');
+    const movieRes = await fetch(`${PRODUCTION_URL}/${encodedConfig}/stream/movie/tt15398776.json`);
     if (!movieRes.ok) throw new Error(`Stream fetch failed: HTTP ${movieRes.status}`);
     const movieData = await movieRes.json();
     const streams = movieData.streams || [];
@@ -270,9 +270,14 @@ async function runTests() {
         console.log(`    [${String(i + 1).padStart(2)}] ${(s.name || '').replace(/\n/g, ' ').substring(0, 60)}`);
     });
 
-    // Test 3: Detailed per-stream checks
-    const testStreams = streams.slice(0, 5);
-    console.log(`\nTEST 3: Detailed resolution checks on top ${testStreams.length} streams...`);
+    // Test 3: Detailed per-stream checks — pick at least 1 UHDMovies stream and top 4KHDHub streams
+    const uhdStreams = streams.filter(s => s.url && (s.url.includes('unblockedgames') || s.url.includes('uhdmovies')));
+    const otherStreams = streams.filter(s => !(s.url && (s.url.includes('unblockedgames') || s.url.includes('uhdmovies'))));
+    const testStreams = [
+        ...uhdStreams.slice(0, 2),
+        ...otherStreams.slice(0, 3)
+    ];
+    console.log(`\nTEST 3: Detailed resolution checks on ${testStreams.length} selected streams (including UHDMovies)...`);
 
     let passed = 0, warned = 0, failed = 0, archiveErrors = 0;
     const results = [];
