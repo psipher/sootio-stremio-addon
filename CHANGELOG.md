@@ -6,6 +6,7 @@
 - Added full Vercel serverless deployment configuration (`serverless.js`, `api/index.js`, `vercel.json`).
 - Updated SQLite cache engines (`lib/util/scraper-performance.js`, `lib/util/sqlite-cache.js`) to automatically use `/tmp` write paths on serverless read-only filesystems (Vercel / AWS Lambda), preventing `SQLITE_READONLY` crashes.
 - Added FlareSolverr HTML DOM solver fallback to XDMovies (`lib/http-streams/providers/xdmovies/search.js`), ensuring download link extraction when public worker APIs hit Cloudflare WAF challenges.
+- Documented FlareSolverr requirements for Angular SPA hydration and WAF bypass on `Asiaflix` and `XDMovies` (`FLARESOLVERR_URL` environment variable).
 - Configured Node ESM test execution with `--experimental-vm-modules` in `package.json`.
 
 ---
