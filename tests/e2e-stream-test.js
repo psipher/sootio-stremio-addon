@@ -1,4 +1,4 @@
-﻿/**
+/**
  * End-to-End Stream Test for Sootio Addon
  * Tests stream fetching, URL resolution, redirect following, and seekability validation.
  *
@@ -16,7 +16,9 @@
 
 import fetch from 'node-fetch';
 
-const PRODUCTION_URL = 'https://sootio-stremio-addon-rosy.vercel.app';
+const PRODUCTION_URL = (process.argv[2] && process.argv[2].startsWith('http'))
+    ? process.argv[2].replace(/\/$/, '')
+    : (process.env.ADDON_URL || 'https://sootio-stremio-addon-wmc4.vercel.app').replace(/\/$/, '');
 const TEST_TIMEOUT_MS = 25000; // Per-stream timeout
 
 const sampleConfig = {
