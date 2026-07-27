@@ -10,6 +10,7 @@
 		"standalone:dev": "cross-env LOG_LEVEL=debug node --max-old-space-size=2048 --expose-gc server.js",
 		"dev": "cross-env LOG_LEVEL=debug NODE_OPTIONS=\"--max-old-space-size=2048 --expose-gc\" nodemon server.js",
 		"test": "node --experimental-vm-modules --max-old-space-size=2048 --expose-gc node_modules/jest/bin/jest.js",
+		"check-domains": "node scripts/check-all-provider-domains.mjs",
 		"test:e2e:mkvdrama": "node tests/mkvdrama-e2e-benchmark.js",
 		"bench:mkvdrama": "node scripts/benchmark-mkvdrama-e2e.js",
 		"build:logo": "node scripts/generate-logo.js"
