@@ -55,14 +55,24 @@ router.get(['/manifest.json', '/:configuration/manifest.json'], (req, res) => {
 router.get([
     '/:resource/:type/:id.json',
     '/:resource/:type/:id/:extra.json',
-    '/:configuration/:resource/:type/:id.json',
-    '/:configuration/:resource/:type/:id/:extra.json'
+    '*'
 ], limiter, (req, res, next) => {
-    console.log(`[DEBUG-ROUTE] Received request: resource=${req.params.resource}, type=${req.params.type}, id=${req.params.id}, config length=${req.params.configuration?.length || 0}`)
-    const { resource, type, id } = req.params
-    const config = parseConfiguration(req.params.configuration)
-    console.log(`[DEBUG-ROUTE] Parsed config providers: ${config.DebridServices?.map(s => s.provider).join(', ') || 'none'}`)
-    const extra = req.params.extra ? qs.parse(req.url.split('/').pop().slice(0, -5)) : {}
+    const urlParts = req.url.split('?')[0].split('/').filter(Boolean);
+    let resource, type, id, extra, configStr;
+
+    if (urlParts.length >= 4 && urlParts[urlParts.length - 1].endsWith('.json')) {
+        const last = urlParts[urlParts.length - 1].slice(0, -5);
+        id = last;
+        type = urlParts[urlParts.length - 2];
+        resource = urlParts[urlParts.length - 3];
+        configStr = urlParts.slice(0, urlParts.length - 3).join('/');
+    } else {
+        return next();
+    }
+
+    const config = parseConfiguration(configStr);
+    console.log(`[DEBUG-ROUTE] Parsed config providers: ${config.DebridServices?.map(s => s.provider).join(', ') || 'none'}`);
+    extra = req.params?.extra ? qs.parse(req.url.split('/').pop().slice(0, -5)) : {};
     const host = `${req.protocol}://${req.headers.host}`;
     const clientIp = requestIp.getClientIp(req);
 
