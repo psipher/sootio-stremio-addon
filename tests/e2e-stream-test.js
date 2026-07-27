@@ -59,22 +59,72 @@ async function runTests() {
             console.log(`[${idx + 1}] ${s.name} - ${s.title.split('\n')[0]} -> URL: ${s.url}`);
         });
 
-        // Test 3: Test Link Resolution
-        const sampleStream = streams[0];
-        console.log(`\n📌 Test 3: Testing Stream URL Resolution for [${sampleStream.name}]...`);
-        if (sampleStream.url) {
-            const res = await fetch(sampleStream.url, { method: 'GET', redirect: 'manual' });
-            console.log(`   Response Status: ${res.status}`);
-            console.log(`   Redirect Location: ${res.headers.get('location') || 'Direct Link'}`);
-            if (res.status >= 400) {
-                const text = await res.text();
-                throw new Error(`Resolution endpoint failed with HTTP ${res.status}: ${text}`);
-            } else {
-                console.log(`✅ Link Resolution Succeeded! (HTTP ${res.status})`);
+        // Test 3: Test Link Resolution & Playability across top 5 streams
+        console.log('\n📌 Test 3: Testing Stream URL Resolution & File Playability across top 5 streams...');
+        const testStreams = streams.slice(0, 5);
+        let successCount = 0;
+        let archiveErrors = 0;
+        let failureCount = 0;
+
+        const NON_STREAMABLE = ['.zip', '.rar', '.7z', '.tar', '.gz'];
+        const VALID_VIDEO = ['.mkv', '.mp4', '.avi', '.ts', '.m3u8'];
+
+        for (let i = 0; i < testStreams.length; i++) {
+            const stream = testStreams[i];
+            console.log(`\n  --- [Stream ${i + 1}/${testStreams.length}] ${stream.name.replace(/\n/g, ' ')} ---`);
+            if (!stream.url) {
+                console.log(`  ❌ Missing stream URL`);
+                failureCount++;
+                continue;
             }
+
+            try {
+                const res = await fetch(stream.url, { method: 'GET', redirect: 'manual' });
+                const redirectUrl = res.headers.get('location');
+                console.log(`     HTTP Status: ${res.status}`);
+                console.log(`     Redirect Target: ${redirectUrl ? redirectUrl.substring(0, 90) + '...' : 'Direct Link'}`);
+
+                if (res.status >= 400) {
+                    const text = await res.text();
+                    console.log(`  ❌ Resolution endpoint failed with HTTP ${res.status}: ${text.substring(0, 100)}`);
+                    failureCount++;
+                    continue;
+                }
+
+                if (redirectUrl) {
+                    const cleanUrl = redirectUrl.split('?')[0].toLowerCase();
+                    const isArchive = NON_STREAMABLE.some(ext => cleanUrl.endsWith(ext));
+                    const isVideo = VALID_VIDEO.some(ext => cleanUrl.endsWith(ext)) || redirectUrl.includes('workers.dev');
+
+                    if (isArchive) {
+                        console.log(`  ❌ ERROR: Resolved URL is an archive file (.zip/.rar), player will throw "Unknown file format"!`);
+                        archiveErrors++;
+                    } else {
+                        console.log(`  ✅ Resolved streamable video URL!`);
+                        successCount++;
+                    }
+                } else {
+                    console.log(`  ✅ Returned direct response (HTTP ${res.status})`);
+                    successCount++;
+                }
+            } catch (err) {
+                console.log(`  ❌ Resolution error: ${err.message}`);
+                failureCount++;
+            }
+        }
+
+        console.log('\n--- Stream Resolution Diagnostics Summary ---');
+        console.log(`  - Total Streams Tested: ${testStreams.length}`);
+        console.log(`  - Successfully Resolved Video Streams: ${successCount}`);
+        console.log(`  - Archive (.zip/.rar) Misclassifications: ${archiveErrors}`);
+        console.log(`  - Stream Resolution Failures: ${failureCount}`);
+
+        if (archiveErrors > 0 || successCount === 0) {
+            throw new Error(`E2E Validation Failed: ${archiveErrors} archive errors, ${successCount}/${testStreams.length} streamable video links.`);
         }
     } else {
         console.log('❌ No streams returned!');
+        throw new Error('E2E Validation Failed: 0 streams returned.');
     }
 
     console.log('\n====================================================');
