@@ -141,6 +141,12 @@ Proxy configuration flows through `lib/util/proxy-manager.js`. Per-service proxi
 2. **SQLite** - Persistent cache (`data/` directory)
 3. **Postgres** - Optional shared cache for multi-instance deployments
 
+### Domain Audit & Auto-Update Protocol 🚨
+- Whenever a provider or resolver test fails with `ENOTFOUND`, `404`, or a domain redirect:
+  1. Run `npm run check-domains` (`node scripts/check-all-provider-domains.mjs`) to audit all provider domains.
+  2. If a domain is **redirected** (e.g. `hubcloud.ist` -> `hubcloud.cx` or `moviesmod.town` -> `moviesmod.at`), update the default domain in `lib/http-streams/` provider configurations and `DomainManager`.
+  3. If a domain returns `ENOTFOUND`, check for the active live domain replacement via web search / `DomainManager` fallback and update the codebase.
+
 ### ESM Modules
 This project uses ES modules (`"type": "module"` in package.json). Use `import`/`export` syntax, not `require()`.
 
