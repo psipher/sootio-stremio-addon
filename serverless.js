@@ -107,27 +107,28 @@ router.use((req, res, next) => {
 
 router.use((req, res, next) => {
     const fullUrl = req.originalUrl || req.url;
-    if (!fullUrl.includes('/resolve/')) return next();
+    const resolveIdx = fullUrl.indexOf('/resolve/');
+    if (resolveIdx === -1) return next();
 
-    // URL structure: /resolve/:debridProvider/:debridApiKey/... or /resolve/:debridProvider/...
-    const match = fullUrl.match(/\/resolve\/([^/]+)(?:\/([^/]+))?\/(.+)$/);
-    if (!match) {
-        console.error('[RESOLVER] Failed to match resolve URL prefix format:', fullUrl);
+    const afterResolve = fullUrl.substring(resolveIdx + '/resolve/'.length);
+    const parts = afterResolve.split('/');
+    if (parts.length < 2) {
+        console.error('[RESOLVER] Insufficient path parameters in resolve URL:', fullUrl);
         return res.status(400).send('Invalid resolve URL format');
     }
 
-    let debridProvider = match[1];
-    let debridApiKey = match[2];
-    let rawTarget = match[3].split('?')[0];
+    let debridProvider = parts[0];
+    let debridApiKey = 'none';
+    let rawTarget = '';
 
-    // Handle 2-part resolve format: /resolve/httpstreaming/https%3A...
-    if (!rawTarget.startsWith('http://') && !rawTarget.startsWith('https://') && !rawTarget.includes('%3A%2F%2F')) {
-        if (debridApiKey && (debridApiKey.startsWith('http') || debridApiKey.includes('%3A%2F%2F'))) {
-            rawTarget = `${debridApiKey}/${rawTarget}`;
-            debridApiKey = 'none';
-        }
+    if (parts.length >= 3 && !parts[1].startsWith('http%3A') && !parts[1].startsWith('https%3A') && !parts[1].startsWith('http://') && !parts[1].startsWith('https://')) {
+        debridApiKey = parts[1];
+        rawTarget = parts.slice(2).join('/');
+    } else {
+        rawTarget = parts.slice(1).join('/');
     }
 
+    rawTarget = rawTarget.split('?')[0];
     const decodedUrl = decodeURIComponent(rawTarget);
     const clientIp = requestIp.getClientIp(req);
 
