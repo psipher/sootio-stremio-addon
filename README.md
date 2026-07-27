@@ -14,6 +14,9 @@
   <a href="#"><img src="https://img.shields.io/badge/node-%5E20.x-brightgreen.svg" alt="Node Version"></a>
 </p>
 
+> [!NOTE]
+> **Status Update (July 27, 2026):** All major provider deprecations, broken scrapers, Cloudflare WAF challenges, and serverless deployment issues from the original repository have been **fully resolved** in this fork. See [`CHANGELOG.md`](CHANGELOG.md) for detailed recovery reports.
+
 ---
 
 ## ✨ Key Features
