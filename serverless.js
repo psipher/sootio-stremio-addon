@@ -22,8 +22,9 @@ const limiter = rateLimit({
 
 router.use(cors())
 
-router.get('/', (_, res) => {
-    res.redirect('/configure')
+router.get('/', (req, res) => {
+    res.statusCode = 302;
+    res.setHeader('Location', '/configure');
     res.end();
 })
 
@@ -146,7 +147,9 @@ router.use((req, res, next) => {
     StreamProvider.resolveUrl(debridProvider, debridApiKey, null, decodedUrl, clientIp, resolveConfig)
         .then(url => {
             if (url) {
-                res.redirect(url);
+                res.statusCode = 307;
+                res.setHeader('Location', url);
+                res.end();
             } else {
                 res.status(404).send('Could not resolve link');
             }
