@@ -29,7 +29,8 @@ router.get('/', (_, res) => {
 
 router.get(['/configure', '/:configuration/configure'], async (req, res) => {
     const config = parseConfiguration(req.params.configuration)
-    const host = `${req.protocol}://${req.headers.host}`;
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+    const host = `${protocol}://${req.headers.host}`;
     const configValues = { ...config, host };
     const landingHTML = await landingTemplate(addonInterface.manifest, configValues)
     res.setHeader('content-type', 'text/html')
@@ -38,7 +39,8 @@ router.get(['/configure', '/:configuration/configure'], async (req, res) => {
 
 router.get(['/manifest.json', '/:configuration/manifest.json'], (req, res) => {
     const config = parseConfiguration(req.params.configuration)
-    const host = `${req.protocol}://${req.headers.host}`;
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+    const host = `${protocol}://${req.headers.host}`;
     const configValues = { ...config, host };
     // For initial install (no configuration) or when ShowCatalog is explicitly disabled, serve manifest without catalogs
     const noCatalogs = Object.keys(config).length === 0 || config.ShowCatalog === false;
@@ -70,7 +72,8 @@ router.use((req, res, next) => {
     const config = parseConfiguration(configStr);
     console.log(`[DEBUG-ROUTE] Parsed config providers: ${config.DebridServices?.map(s => s.provider).join(', ') || 'none'}`);
     extra = req.params?.extra ? qs.parse(req.url.split('/').pop().slice(0, -5)) : {};
-    const host = `${req.protocol}://${req.headers.host}`;
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+    const host = `${protocol}://${req.headers.host}`;
     const clientIp = requestIp.getClientIp(req);
 
     // Combine all configuration values properly, including clientIp
