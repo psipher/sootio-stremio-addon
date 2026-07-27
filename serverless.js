@@ -145,10 +145,11 @@ router.use((req, res, next) => {
     if (cacheHash && cacheHash.length < 128) resolveConfig.cacheHash = cacheHash;
 
     StreamProvider.resolveUrl(debridProvider, debridApiKey, null, decodedUrl, clientIp, resolveConfig)
-        .then(url => {
-            if (url) {
+        .then(result => {
+            const finalRedirectUrl = typeof result === 'object' && result ? result.url : result;
+            if (finalRedirectUrl && typeof finalRedirectUrl === 'string') {
                 res.statusCode = 307;
-                res.setHeader('Location', url);
+                res.setHeader('Location', finalRedirectUrl);
                 res.end();
             } else {
                 res.status(404).send('Could not resolve link');
