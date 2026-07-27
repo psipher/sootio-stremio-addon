@@ -5,10 +5,10 @@
 	"main": "server.js",
 	"scripts": {
 		"start": "node --max-old-space-size=2048 --expose-gc cluster.js",
-		"start:dev": "LOG_LEVEL=debug node --max-old-space-size=2048 --expose-gc cluster.js",
+		"start:dev": "cross-env LOG_LEVEL=debug node --max-old-space-size=2048 --expose-gc cluster.js",
 		"standalone": "node --max-old-space-size=12000 --expose-gc server.js",
-		"standalone:dev": "LOG_LEVEL=debug node --max-old-space-size=2048 --expose-gc server.js",
-		"dev": "LOG_LEVEL=debug NODE_OPTIONS=\"--max-old-space-size=2048 --expose-gc\" nodemon server.js",
+		"standalone:dev": "cross-env LOG_LEVEL=debug node --max-old-space-size=2048 --expose-gc server.js",
+		"dev": "cross-env LOG_LEVEL=debug NODE_OPTIONS=\"--max-old-space-size=2048 --expose-gc\" nodemon server.js",
 		"test": "node --max-old-space-size=2048 --expose-gc node_modules/.bin/jest",
 		"test:e2e:mkvdrama": "node tests/mkvdrama-e2e-benchmark.js",
 		"bench:mkvdrama": "node scripts/benchmark-mkvdrama-e2e.js",
@@ -34,6 +34,7 @@
 		"fuse.js": "^7.5.0",
 		"http-proxy-agent": "^9.1.0",
 		"https-proxy-agent": "^9.1.0",
+		"impit": "^0.14.3",
 		"loglevel": "^1.9.2",
 		"node-cache": "^5.1.2",
 		"node-fetch": "^3.3.2",
@@ -63,6 +64,7 @@
 	],
 	"devDependencies": {
 		"@jest/globals": "^30.4.1",
+		"cross-env": "^10.1.0",
 		"jest": "^30.4.2",
 		"nodemon": "^3.1.14",
 		"sharp": "^0.35.3"

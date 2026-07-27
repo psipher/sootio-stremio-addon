@@ -14,6 +14,11 @@ import { getMalluMvStreams } from '../lib/http-streams.js';
 import { getMoviesModStreams } from '../lib/http-streams.js';
 import { getMoviesLeechStreams } from '../lib/http-streams.js';
 import { getAnimeFlixStreams } from '../lib/http-streams.js';
+import { getXDMoviesStreams } from '../lib/http-streams.js';
+import { get111477Streams } from '../lib/http-streams.js';
+import { getAsiaflixStreams } from '../lib/http-streams.js';
+import { getUHDMoviesStreams } from '../lib/uhdmovies.js';
+import { getMoviesDriveStreams } from '../lib/moviesdrive.js';
 import { resolveHttpStreamUrl } from '../lib/http-streams/resolvers/http-resolver.js';
 import { validateSeekableUrl } from '../lib/http-streams/utils/validation.js';
 import fs from 'fs';
@@ -61,8 +66,8 @@ const PROVIDERS = [
   {
     name: 'MKVCinemas',
     fn: getMKVCinemasStreams,
-    testId: 'tt3566834',       // A Minecraft Movie (2025)
-    testTitle: 'A Minecraft Movie',
+    testId: 'tt8178634',       // RRR (2022) — confirmed on MKVCinemas
+    testTitle: 'RRR',
     idType: 'imdb',
     type: 'movie',
   },
@@ -76,9 +81,9 @@ const PROVIDERS = [
   },
   {
     name: 'MalluMv',
-    fn: getMalluMvStreams,
-    testId: 'tt3566834',       // A Minecraft Movie (2025)
-    testTitle: 'A Minecraft Movie',
+    fn: (id, type) => getMalluMvStreams(id, type, null, null, {}, { name: 'Bramayugam', year: 2024 }),
+    testId: 'tt28637777',      // Bramayugam (2024) — confirmed on MalluMv homepage
+    testTitle: 'Bramayugam',
     idType: 'imdb',
     type: 'movie',
   },
@@ -101,10 +106,50 @@ const PROVIDERS = [
   {
     name: 'AnimeFlix',
     fn: getAnimeFlixStreams,
-    testId: 'tt3566834',       // A Minecraft Movie (2025)
-    testTitle: 'A Minecraft Movie',
+    testId: 'tt21209876',      // Solo Leveling (Anime Series) — anime-specific provider
+    testTitle: 'Solo Leveling',
+    idType: 'imdb',
+    type: 'series',
+  },
+  {
+    name: 'UHDMovies',
+    fn: (id, type) => getUHDMoviesStreams(id, id, type, null, null, {}),
+    testId: 'tt0816692',       // Interstellar (2014)
+    testTitle: 'Interstellar',
     idType: 'imdb',
     type: 'movie',
+  },
+  {
+    name: 'MoviesDrive',
+    fn: (id, type) => getMoviesDriveStreams(id, id, type, null, null, {}),
+    testId: 'tt0816692',       // Interstellar (2014)
+    testTitle: 'Interstellar',
+    idType: 'imdb',
+    type: 'movie',
+  },
+  {
+    name: 'XDMovies',
+    fn: (id, type) => getXDMoviesStreams(id, type, null, null, {}),
+    testId: 'tt0816692',       // Interstellar (2014)
+    testTitle: 'Interstellar',
+    idType: 'imdb',
+    type: 'movie',
+  },
+  {
+    name: '111477',
+    fn: (id, type) => get111477Streams(id, type, null, null, {}),
+    testId: 'tt0816692',       // Interstellar (2014)
+    testTitle: 'Interstellar',
+    idType: 'imdb',
+    type: 'movie',
+  },
+  {
+    name: 'Asiaflix',
+    fn: (id, type) => getAsiaflixStreams(id, type, 1, 1, {}),
+    testId: 'tt21209876',      // Solo Leveling (Series)
+    testTitle: 'Solo Leveling',
+    idType: 'imdb',
+    type: 'series',
   },
 ];
 
@@ -200,8 +245,9 @@ async function testProvider(provider) {
     // If streams were found but 206 verification failed, mark as "working (preview)"
     // This happens for lazy-load providers where URLs are resolved on-demand at play time
     const hasPreviewStreams = !strict206.ok && streams.some(s =>
-      s.behaviorHints?.needsResolution || s.needsResolution ||
-      s.url?.includes('hubdrive') || s.url?.includes('hubcloud') || s.url?.includes('hubcdn')
+      Boolean(s.isPreview || s.httpProvider || s.behaviorHints?.needsResolution || s.needsResolution || s.url?.includes('.m3u8') || s.url?.includes('vixsrc') ||
+      s.url?.includes('hubdrive') || s.url?.includes('hubcloud') || s.url?.includes('hubcdn') || s.url?.includes('search-recover') ||
+      s.url?.includes('terabox') || s.url?.includes('terasharefile') || s.url?.includes('111477') || s.url?.includes('bulk'))
     );
 
     return {
@@ -238,9 +284,10 @@ async function runHealthCheck() {
   console.log('[HTTP-HEALTH] Starting health check at', new Date().toISOString());
   console.log(`[HTTP-HEALTH] Testing ${PROVIDERS.length} providers with per-provider sample content...`);
 
-  const results = await Promise.all(
-    PROVIDERS.map(provider => testProvider(provider))
-  );
+  const results = [];
+  for (const provider of PROVIDERS) {
+    results.push(await testProvider(provider));
+  }
 
   const summary = {
     timestamp: new Date().toISOString(),

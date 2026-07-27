@@ -27,7 +27,7 @@ router.get('/', (_, res) => {
     res.end();
 })
 
-router.get('/:configuration?/configure', async (req, res) => {
+router.get(['/configure', '/:configuration/configure'], async (req, res) => {
     const config = parseConfiguration(req.params.configuration)
     const host = `${req.protocol}://${req.headers.host}`;
     const configValues = { ...config, host };
@@ -36,7 +36,7 @@ router.get('/:configuration?/configure', async (req, res) => {
     res.end(landingHTML)
 })
 
-router.get('/:configuration?/manifest.json', (req, res) => {
+router.get(['/manifest.json', '/:configuration/manifest.json'], (req, res) => {
     const config = parseConfiguration(req.params.configuration)
     const host = `${req.protocol}://${req.headers.host}`;
     const configValues = { ...config, host };
@@ -52,7 +52,12 @@ router.get('/:configuration?/manifest.json', (req, res) => {
     res.end(JSON.stringify(getManifest(configValues, noCatalogs)))
 })
 
-router.get(`/:configuration?/:resource/:type/:id/:extra?.json`, limiter, (req, res, next) => {
+router.get([
+    '/:resource/:type/:id.json',
+    '/:resource/:type/:id/:extra.json',
+    '/:configuration/:resource/:type/:id.json',
+    '/:configuration/:resource/:type/:id/:extra.json'
+], limiter, (req, res, next) => {
     console.log(`[DEBUG-ROUTE] Received request: resource=${req.params.resource}, type=${req.params.type}, id=${req.params.id}, config length=${req.params.configuration?.length || 0}`)
     const { resource, type, id } = req.params
     const config = parseConfiguration(req.params.configuration)

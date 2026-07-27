@@ -1857,7 +1857,7 @@ app.get('/usenet/poll/:nzbUrl/:title/:type/:id', async (req, res) => {
 
 // Personal file streaming endpoint (files already on server)
 // PROXY through Node.js to track when stream stops
-app.get('/usenet/personal/*', async (req, res) => {
+app.get('/usenet/personal/*splat', async (req, res) => {
     try {
         const configJson = req.query.config;
         if (!configJson) {
@@ -1873,7 +1873,7 @@ app.get('/usenet/personal/*', async (req, res) => {
         const config = JSON.parse(decodedConfigJson);
 
         // Extract the file path from the URL (everything after /usenet/personal/)
-        const filePath = req.params[0];
+        const filePath = req.params.splat || req.params[0];
         const decodedFilePath = decodeURIComponent(filePath);
 
         console.log(`[USENET-PERSONAL] Stream request for personal file: ${decodedFilePath}`);
@@ -3567,8 +3567,8 @@ const HTTP_STREAMS_STARTUP_HEALTHCHECK_ENABLED = process.env.HTTP_STREAMS_STARTU
 const shouldRunStartupHealthCheck = HTTP_STREAMS_STARTUP_HEALTHCHECK_ENABLED && (!cluster.isWorker || cluster.worker?.id === 1);
 
 // Check if we're running directly (not being imported by cluster)
-// For standalone mode, start the server directly
-if (import.meta.url === `file://${__filename}`) {
+const isMainModule = process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1]);
+if (isMainModule || import.meta.url === `file://${__filename}`) {
     // Start memory monitoring before server starts
     memoryMonitor.setThresholdHandler(() => {
         const cacheStats = {
@@ -3589,8 +3589,9 @@ if (import.meta.url === `file://${__filename}`) {
     });
     memoryMonitor.startMonitoring();
 
-    server = app.listen(PORT, HOST, () => {
-        console.log('HTTP server listening on port: ' + server.address().port);
+    server = app.listen(PORT, HOST, function() {
+        const addr = this.address();
+        console.log('HTTP server listening on port: ' + (addr?.port || PORT));
         if (shouldRunStartupHealthCheck) {
             // Run HTTP streams health check in background on startup
             runHealthCheckOnStartup();
