@@ -12,6 +12,10 @@ const FLARESOLVERR_PROXY_URL = process.env.FLARESOLVERR_PROXY_URL || '';
 const OUO_USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
 async function fetchWithFlareSolverr(url, options = {}) {
+    if (!FLARESOLVERR_URL) {
+        console.log('No FLARESOLVERR_URL configured - skipping live FlareSolverr call');
+        return { body: null, url: null, status: null };
+    }
     const requestBody = {
         cmd: options.method === 'POST' ? 'request.post' : 'request.get',
         url,
@@ -202,4 +206,12 @@ async function testResolve() {
     }
 }
 
-testResolve().catch(console.error);
+if (typeof describe !== 'undefined') {
+    describe('MKVDrama Resolve', () => {
+        test('should test OUO link resolution', async () => {
+            await testResolve();
+        }, 60000);
+    });
+} else {
+    testResolve().catch(console.error);
+}

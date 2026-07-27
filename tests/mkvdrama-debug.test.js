@@ -12,6 +12,10 @@ const FLARESOLVERR_PROXY_URL = process.env.FLARESOLVERR_PROXY_URL || '';
 const BASE_URL = 'https://mkvdrama.net';
 
 async function fetchWithFlareSolverr(url) {
+    if (!FLARESOLVERR_URL) {
+        console.log('No FLARESOLVERR_URL configured - skipping live FlareSolverr call');
+        return null;
+    }
     const requestBody = {
         cmd: 'request.get',
         url,
@@ -107,4 +111,12 @@ async function debugSearch() {
     uniqueLinks.forEach(l => console.log(`  ${l}`));
 }
 
-debugSearch().catch(console.error);
+if (typeof describe !== 'undefined') {
+    describe('MKVDrama Debug Search', () => {
+        test('should run debug search helper', async () => {
+            await debugSearch();
+        }, 30000);
+    });
+} else {
+    debugSearch().catch(console.error);
+}

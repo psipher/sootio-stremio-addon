@@ -251,6 +251,8 @@ if (typeof describe !== 'undefined') {
 }
 
 // Run directly if executed as script
-runTests().catch(console.error);
+if (!process.env.JEST_WORKER_ID && typeof describe === 'undefined') {
+    runTests().catch(console.error);
+}
 
 export { runTests, testHubCloudFlareSolverrCalls, testDirectHubCloudAccess, testRateLimitErrorStream };

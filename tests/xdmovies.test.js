@@ -48,14 +48,15 @@ async function testContentLoading(url) {
 
     try {
         const content = await loadXDMoviesContent(url);
+        const links = content?.downloadEntries || content?.downloadLinks || [];
         console.log(`Title: ${content?.title || 'N/A'}`);
         console.log(`Type: ${content?.type || 'N/A'}`);
         console.log(`Year: ${content?.year || 'N/A'}`);
-        console.log(`Download links: ${content?.downloadLinks?.length || 0}`);
+        console.log(`Download links: ${links.length}`);
 
-        if (content?.downloadLinks?.length > 0) {
+        if (links.length > 0) {
             console.log('\nFirst 5 download links:');
-            content.downloadLinks.slice(0, 5).forEach((link, idx) => {
+            links.slice(0, 5).forEach((link, idx) => {
                 console.log(`  ${idx + 1}. ${link.label || 'No label'}`);
                 console.log(`     Quality: ${link.quality || 'unknown'}`);
                 console.log(`     URL: ${link.url?.substring(0, 80)}...`);
@@ -204,5 +205,12 @@ async function runTests() {
     console.log('\n');
 }
 
-// Run tests
-runTests().catch(console.error);
+if (typeof describe !== 'undefined') {
+    describe('XDMovies Provider', () => {
+        test('should run XDMovies integration test suite', async () => {
+            await runTests();
+        }, 60000);
+    });
+} else {
+    runTests().catch(console.error);
+}

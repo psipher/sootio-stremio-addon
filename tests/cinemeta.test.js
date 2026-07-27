@@ -31,4 +31,12 @@ async function runTest() {
     }
 }
 
-runTest();
+if (typeof describe !== 'undefined') {
+    describe('Cinemeta API', () => {
+        test('should fetch metadata for IMDB ID', async () => {
+            await runTest();
+        }, 15000);
+    });
+} else {
+    runTest();
+}

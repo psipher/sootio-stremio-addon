@@ -11,6 +11,10 @@ const FLARESOLVERR_URL = process.env.FLARESOLVERR_URL || '';
 const FLARESOLVERR_PROXY_URL = process.env.FLARESOLVERR_PROXY_URL || '';
 
 async function fetchWithFlareSolverr(url) {
+    if (!FLARESOLVERR_URL) {
+        console.log('No FLARESOLVERR_URL configured - skipping live FlareSolverr call');
+        return null;
+    }
     const requestBody = {
         cmd: 'request.get',
         url,
@@ -148,4 +152,12 @@ async function debugContent() {
     });
 }
 
-debugContent().catch(console.error);
+if (typeof describe !== 'undefined') {
+    describe('MKVDrama Content Debug', () => {
+        test('should execute content debug helper', async () => {
+            await debugContent();
+        }, 30000);
+    });
+} else {
+    debugContent().catch(console.error);
+}

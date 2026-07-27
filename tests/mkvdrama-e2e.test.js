@@ -49,4 +49,12 @@ async function runTest() {
     }
 }
 
-runTest();
+if (typeof describe !== 'undefined') {
+    describe('MKVDrama E2E', () => {
+        test('should fetch MKVDrama streams', async () => {
+            await runTest();
+        }, 60000);
+    });
+} else {
+    runTest();
+}

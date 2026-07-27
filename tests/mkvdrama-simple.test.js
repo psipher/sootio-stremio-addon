@@ -216,4 +216,12 @@ async function runTests() {
     console.log('\n=== Tests Complete ===');
 }
 
-runTests().catch(console.error);
+if (typeof describe !== 'undefined') {
+    describe('MKVDrama Simple', () => {
+        test('should run MKVDrama simple test suite', async () => {
+            await runTests();
+        }, 60000);
+    });
+} else {
+    runTests().catch(console.error);
+}

@@ -12,6 +12,10 @@ const FLARESOLVERR_PROXY_URL = process.env.FLARESOLVERR_PROXY_URL || '';
 const OUO_HOSTS = ['ouo.io', 'ouo.press', 'oii.la'];
 
 async function fetchWithFlareSolverr(url) {
+    if (!FLARESOLVERR_URL) {
+        console.log('No FLARESOLVERR_URL configured - skipping live FlareSolverr call');
+        return null;
+    }
     const requestBody = {
         cmd: 'request.get',
         url,
@@ -147,4 +151,12 @@ async function testFix() {
     }
 }
 
-testFix().catch(console.error);
+if (typeof describe !== 'undefined') {
+    describe('MKVDrama Fix Test', () => {
+        test('should verify collected links', async () => {
+            await testFix();
+        }, 30000);
+    });
+} else {
+    testFix().catch(console.error);
+}
