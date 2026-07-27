@@ -223,7 +223,7 @@ npx wrangler deploy
 
 1. **Set Vercel env vars** (if not already done):
    - `CF_PROXY_URL=https://sootio-fetch-proxy.reclassified.workers.dev/proxy`
-   - `CF_PROXY_TOKEN=c4ba45d951005f4124d9e39bf4325e5f62176d369e8bc3547a13429dfbe1b645`
+   - `CF_PROXY_TOKEN=<your-secret-matching-workers-PROXY_AUTH_TOKEN>`
    - After setting, trigger a Vercel redeploy (or `git push`).
 
 2. **Validate with E2E test** after Vercel redeploy:
