@@ -63,12 +63,14 @@ async function runTests() {
         const sampleStream = streams[0];
         console.log(`\n📌 Test 3: Testing Stream URL Resolution for [${sampleStream.name}]...`);
         if (sampleStream.url) {
-            try {
-                const res = await fetch(sampleStream.url, { method: 'HEAD', redirect: 'manual' });
-                console.log(`✅ Response Status: ${res.status}`);
-                console.log(`✅ Redirect Location: ${res.headers.get('location') || 'Direct Link'}`);
-            } catch (err) {
-                console.error(`❌ Link test error: ${err.message}`);
+            const res = await fetch(sampleStream.url, { method: 'GET', redirect: 'manual' });
+            console.log(`   Response Status: ${res.status}`);
+            console.log(`   Redirect Location: ${res.headers.get('location') || 'Direct Link'}`);
+            if (res.status >= 400) {
+                const text = await res.text();
+                throw new Error(`Resolution endpoint failed with HTTP ${res.status}: ${text}`);
+            } else {
+                console.log(`✅ Link Resolution Succeeded! (HTTP ${res.status})`);
             }
         }
     } else {

@@ -106,18 +106,19 @@ router.use((req, res, next) => {
 })
 
 router.use((req, res, next) => {
-    if (!req.url.startsWith('/resolve/')) return next();
+    const fullUrl = req.originalUrl || req.url;
+    if (!fullUrl.includes('/resolve/')) return next();
 
     // URL structure: /resolve/:debridProvider/:debridApiKey/...
-    const prefixMatch = req.url.match(/^\/resolve\/([^/]+)\/([^/]+)\/(.+)$/);
-    if (!prefixMatch) {
-        console.error('[RESOLVER] Failed to match resolve URL prefix format:', req.url);
+    const match = fullUrl.match(/\/resolve\/([^/]+)\/([^/]+)\/(.+)$/);
+    if (!match) {
+        console.error('[RESOLVER] Failed to match resolve URL prefix format:', fullUrl);
         return res.status(400).send('Invalid resolve URL format');
     }
 
-    const debridProvider = prefixMatch[1];
-    const debridApiKey = prefixMatch[2];
-    const rawTarget = prefixMatch[3].split('?')[0];
+    const debridProvider = match[1];
+    const debridApiKey = match[2];
+    const rawTarget = match[3].split('?')[0];
     const decodedUrl = decodeURIComponent(rawTarget);
     const clientIp = requestIp.getClientIp(req);
 
